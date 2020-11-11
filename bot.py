@@ -10,7 +10,6 @@ if __name__ == "__main__":
 	query = []
 
 	if argc >= 2:
-
 		for x in range(1, argc):
 			query.append(sys.argv[x])
 
@@ -27,7 +26,7 @@ if __name__ == "__main__":
 
 		driver.set_page_load_timeout(20)
 
-		results = driver.find_element_by_xpath('//*[@id="main-content"]/div[1]/div[2]')
+		results = driver.find_elements_by_xpath('//*[@id="main-content"]/div[1]/div[2]')
 		results_urls = [result.get_attribute('href') for result in results]
 
 		print(*results, sep = "\n") 
