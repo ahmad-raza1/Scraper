@@ -1,6 +1,5 @@
 import sys
 import constants
-import pandas as pd
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
@@ -37,7 +36,7 @@ if __name__ == "__main__":
 
 		splits = main_div.find_elements_by_css_selector('.cl-paper-row.serp-papers__paper-row.paper-row-normal')
 
-		abst_getable = []; abstract_expand_btns = []; abstract_spans = []
+		abstract_getable = []; abstract_expand_btns = []; abstract_spans = []
 		abstract_div = None
 
 		for x in range(len(splits)): 
@@ -45,18 +44,17 @@ if __name__ == "__main__":
 		    	#print("Let's pick abstracts!!!")
 		    	try:
 		    		abstract_div = splits[x].find_element_by_css_selector('div.tldr-abstract-replacement')
-		    		abstract_spans.append(abstract_div)
 		    	except:	# try second option
 		    		abstract_div = splits[x].find_element_by_css_selector('div.cl-paper-abstract')
-		    		abstract_spans.append(abstract_div)
-
+		    	
+		    	abstract_spans.append(abstract_div)
 	    		abstract_expand_btns.append(abstract_div.find_element_by_css_selector('span.more.mod-clickable'))
-	    		abst_getable.append(True)
+	    		abstract_getable.append(True)
 		        
 		    except:
-		        abst_getable.append(False)
+		        abstract_getable.append(False)
 
-		print(abst_getable); print()
+		print(abstract_getable); print()
 
 		for x in range(len(abstract_expand_btns)):
 		    WebDriverWait(driver, constants.TIMEOUT).until(EC.visibility_of(abstract_expand_btns[x]))
@@ -73,7 +71,7 @@ if __name__ == "__main__":
 		i = 0
 
 		for x in range(len(splits)):
-		    if abst_getable[x] == True:
+		    if abstract_getable[x] == True:
 		            list_.append(
 		            {
 		            "url" : urls[x],
