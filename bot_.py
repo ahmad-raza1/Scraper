@@ -46,7 +46,6 @@ if __name__ == "__main__":
 		        abstract_div = splits[x].find_element_by_css_selector('div.tldr-abstract-replacement')
 		        abstract_expand_btns.append(abstract_div.find_element_by_css_selector('span.more.mod-clickable'))
 		        abst_getable.append(True)
-
 		    except:
 		        abst_getable.append(False)
 
