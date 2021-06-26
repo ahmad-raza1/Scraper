@@ -1,5 +1,5 @@
-import sys
 import constants
+import sys, time, json
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
@@ -18,7 +18,7 @@ if __name__ == "__main__":
 		query_str = " ".join(query)
 		
 		chrome_options = webdriver.ChromeOptions()
-		chrome_options.add_argument('--headless')
+		#chrome_options.add_argument('--headless')
 		driver = webdriver.Chrome(options=chrome_options)
 		driver.maximize_window()
 
@@ -30,70 +30,111 @@ if __name__ == "__main__":
 		while True:
 			try:
 				main_div = driver.find_element(By.CLASS_NAME, 'result-page')
+				pagination_div = driver.find_element(By.CLASS_NAME, 'cl-pager')
 				break
+
 			except Exception as e:
 				print("DOM loading...\n")
 
-		splits = main_div.find_elements_by_css_selector('.cl-paper-row.serp-papers__paper-row.paper-row-normal')
+		pages = pagination_div.find_elements_by_css_selector('div.cl-pager__button.cl-pager__number')
+		#print(len(results), "\n")
+		#print(len(pages))
 
-		abstract_getable = []; abstract_expand_btns = []; abstract_spans = []
-		abstract_div = None
+		flag = [];
+		urls = []; pdf_urls = []; titles = []; abstracts = []
 
-		for x in range(len(splits)): 
-		    try:
-		    	#print("Let's pick abstracts!!!")
-		    	try:
-		    		abstract_div = splits[x].find_element_by_css_selector('div.tldr-abstract-replacement')
-		    	except:	# try second option
-		    		abstract_div = splits[x].find_element_by_css_selector('div.cl-paper-abstract')
-		    	
-		    	abstract_spans.append(abstract_div)
-	    		abstract_expand_btns.append(abstract_div.find_element_by_css_selector('span.more.mod-clickable'))
-	    		abstract_getable.append(True)
-		        
-		    except:
-		        abstract_getable.append(False)
+		for x in range(len(pages)):
+			while True:
+				try:
+					main_div = driver.find_element(By.CLASS_NAME, 'result-page')
+					break
 
-		print(abstract_getable); print()
+				except Exception as e:
+					pass
 
-		for x in range(len(abstract_expand_btns)):
-		    WebDriverWait(driver, constants.TIMEOUT).until(EC.visibility_of(abstract_expand_btns[x]))
-		    driver.execute_script("arguments[0].click();", abstract_expand_btns[x])
+			time.sleep(5)
+			splits = main_div.find_elements_by_css_selector('.cl-paper-row.serp-papers__paper-row.paper-row-normal')
+			
+			temp = []
+			url_hrefs = []; pdf_url_hrefs = []; title_spans = []
+			abstract_spans = []; abstract_expand_btns = []
 
-		url_hrefs = main_div.find_elements_by_css_selector('div.cl-paper-row.serp-papers__paper-row > a')
-		title_spans =  main_div.find_elements_by_css_selector('div > a > div > span')
+			# if pdf is not available
+			empty_flag = True
 
-		urls = [a.get_attribute('href') for a in url_hrefs]
-		titles = [title.text.encode('utf8') for title in title_spans]
-		abstracts = [abstract.text.encode('utf8') for abstract in abstract_spans]
+			for y in range(len(splits)):
+				try:
+					hello = splits[y].find_element_by_css_selector('span.cl-button__label')
 
-		list_ = []
-		i = 0
+				except Exception as e:
+					pass
 
-		for x in range(len(splits)):
-		    if abstract_getable[x] == True:
-		            list_.append(
-		            {
-		            "url" : urls[x],
-		            "title" : titles[x],
-		            "abstract" : abstracts[i]
-		            }
-		        );
-		            i = i + 1
-		    else:
-		        list_.append(
-		            {
-		            "url" : urls[x],
-		            "title" : titles[x],
-		            "abstract" : ""
-		            }
-		        );
+				pdf_btn = splits[y].find_element_by_css_selector('span.cl-button__label')
 
-		print(*list_, sep = "\n\n")
+				if pdf_btn.text == "View PDF on arXiv":
+					empty_flag = False
 
-		with open('listfile.txt', 'w') as filehandle:
-		    for listitem in list_:
-		        filehandle.write('%s\n\n' % listitem)
+					# pdfs
+					pdf_url = splits[y].find_element_by_css_selector('a.flex-row.cl-paper-view-paper')
+					pdf_url_hrefs.append(pdf_url)
+
+					# Let's now pick abstracts!!!
+					try:
+						abstract_div = splits[y].find_element_by_css_selector('div.tldr-abstract-replacement')
+					
+					except:	# try second option
+						abstract_div = splits[y].find_element_by_css_selector('div.cl-paper-abstract')
+
+					# abstracts
+					abstract_spans.append(abstract_div)
+					abstract_expand_btns.append(abstract_div.find_element_by_css_selector('span.more.mod-clickable'))
+
+					# url and title
+					url_hrefs.append(splits[y].find_element_by_css_selector('div.cl-paper-row.serp-papers__paper-row > a'))
+					title_spans.append(splits[y].find_element_by_css_selector('div.cl-paper-title'))
+
+					print("Result {}:".format(y + 1), pdf_url.get_attribute('href'), "\n")
+					temp.append(True)
+
+				else:
+					temp.append(False)
+
+			# if there are pdfs on the page
+			if not empty_flag:
+				# click abstract expand-links
+				for z in range(len(abstract_expand_btns)):
+					WebDriverWait(driver, constants.TIMEOUT).until(EC.visibility_of(abstract_expand_btns[z]))
+					driver.execute_script("arguments[0].click();", abstract_expand_btns[z])
+
+				# save text in the lists
+				for url, pdf_url, title, abstract in zip(
+					url_hrefs, pdf_url_hrefs, title_spans, abstract_spans):
+
+					urls.append(url.get_attribute('href'))
+					pdf_urls.append(pdf_url.get_attribute('href'))
+					titles.append(title.text)
+					abstracts.append(abstract.text)
+
+			flag.append(temp)
+			print("Page {}:".format(x + 1), flag[x], "\n")
+
+			if x < len(pages) - 1:
+				WebDriverWait(driver, constants.TIMEOUT).until(EC.visibility_of(pages[x + 1]))
+				driver.execute_script("arguments[0].click();", pages[x + 1])
+
+		# save the final result
+		list_ = {}
+		
+		list_["urls"] = urls
+		list_["pdf_urls"] = pdf_urls
+		list_["titles"] = titles
+		list_["abstracts"] = abstracts
+
+		print("\n\n----------------------------------\n\n")
+		print(json.dumps(list_, sort_keys=False, indent=4))
+
+		with open("sample.json", "w") as outfile: 
+			json.dump(list_, outfile)
 
 		driver.close()
 
