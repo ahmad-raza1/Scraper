@@ -1,5 +1,6 @@
 import constants
 import sys, time, json
+from download import download_file
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
@@ -135,7 +136,14 @@ if __name__ == "__main__":
 
 		for url, pdf_url, title, abstract in zip(
 			urls, pdf_urls, titles, abstracts):
-			
+
+			"""
+			# download PDF
+			filename = 1
+			download_file(pdf_url, str(filename))
+			filename += 1
+			"""
+
 			list_.append(
 				{
 					"url": url,
