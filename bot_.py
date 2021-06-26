@@ -29,7 +29,6 @@ if __name__ == "__main__":
 
 		while True:
 			try:
-				main_div = driver.find_element(By.CLASS_NAME, 'result-page')
 				pagination_div = driver.find_element(By.CLASS_NAME, 'cl-pager')
 				break
 
@@ -47,6 +46,7 @@ if __name__ == "__main__":
 			while True:
 				try:
 					main_div = driver.find_element(By.CLASS_NAME, 'result-page')
+					splits = main_div.find_elements_by_css_selector('.cl-paper-row.serp-papers__paper-row.paper-row-normal')
 					break
 
 				except Exception as e:
@@ -124,7 +124,7 @@ if __name__ == "__main__":
 
 		# save the final result
 		list_ = {}
-		
+
 		list_["urls"] = urls
 		list_["pdf_urls"] = pdf_urls
 		list_["titles"] = titles
